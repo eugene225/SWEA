@@ -1,58 +1,61 @@
-#define MOD 1000000007
-
-#include <iostream>
-#include <string>
-#include <cstring>
+#include<iostream>
 
 using namespace std;
 
-long long DP[1001][16];
-
 int main(int argc, char** argv)
 {
-	int test_case;
-	int T;
+    int test_case;
+    int T;
+    freopen("input.txt", "r", stdin);
+    cin >> T;
+    for (test_case = 1; test_case <= T; ++test_case)
+    {
+        char chiefs[10000];
+        int pivot = 0;
+        int* counts = new int[16];
 
-	cin >> T;
-	
-	for (test_case = 1; test_case <= T; ++test_case)
-	{
-		string in; cin >> in;
-		int len = in.length();
-		memset(DP, 0, sizeof(DP));
+        cin >> chiefs;
 
-		for (int i = 0; i < len; i++)
-		{
-			int admin = 1 << (in[i] - 'A');
+        for (int i = 0; i < 16; i++) counts[i] = 0;
 
-			for (int j = 1; j < 16; j++)
-			{
-				if (i == 0)
-				{
-					if ((j & admin) != 0 && (j & 1) != 0)
-					{
-						DP[i][j] = 1;
-					}
-				}
-				else
-					if (DP[i - 1][j] != 0)
-						for (int k = 1; k < 16; k++)
-							if ((k & j) != 0 && (k & admin) != 0)
-							{
-								DP[i][k] += DP[i - 1][j];
-								DP[i][k] %= MOD;
-							}
-			}
-		}
+        counts[1]++;
 
-		long long out = 0;
-		for (int i = 1; i < 16; i++)
-		{
-			out += DP[len - 1][i];
-			out %= MOD;
-		}
+        while (chiefs[pivot]) {
+            int* newCnts = new int[16];
+            for (int i = 0; i < 16; i++) newCnts[i] = 0;
 
-		cout << '#' << test_case << ' ' << out << '\n';
-	}
-	return 0;
+            int chief = chiefs[pivot] - 'A';
+
+            for (int i = 0; i < 16; i++) {
+                if (!(i & 1 << chief)) continue;
+
+                long long cnt = 0;
+                for (int j = 0; j < 16; j++) {
+                    if (!(j & i)) continue;
+
+                    cnt += counts[j];
+
+                    if (cnt > 1000000007) cnt %= 1000000007;
+                }
+
+                newCnts[i] = cnt;
+            }
+
+            delete counts;
+            counts = newCnts;
+
+            pivot++;
+        }
+
+        int sum = 0;
+        for (int i = 0; i < 16; i++) {
+            sum += counts[i];
+            if (sum > 1000000007) sum %= 1000000007;
+        }
+
+        delete counts;
+
+        cout << '#' << test_case << ' ' << sum << endl;
+    }
+    return 0;
 }
