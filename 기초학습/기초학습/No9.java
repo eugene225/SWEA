@@ -1,7 +1,7 @@
 import java.io.*;
 import java.util.*;
 
-public class middle{
+public class No9{
     public static char tree[];
     public static int len;
 
