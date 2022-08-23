@@ -5,6 +5,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="No9.java" kind="src" path=""/>
+	<classpathentry excluding="No9.java|No10.java" kind="src" path=""/>
 	<classpathentry kind="output" path=""/>
 </classpath>
