@@ -1,34 +1,42 @@
 #include<iostream>
+#include<cstring>
+
 using namespace std;
+typedef unsigned long long ll;
 
-int main() {
-	int T;
-	int X, Y, L;
+ll A, B, K;
+ll DIV;
 
-	cin >> T;
-	int* res = new int[T+1];
+ll myMod(ll n) {
 
-	for (int tc = 1; tc <= T; tc++) {
-		cin >> X >> Y >> L;
+    if (n == 0) return 1;
 
-		for (int i = 0; i < L; i++) {
+    ll tmp = myMod(n >> 1);
+    tmp *= tmp;
+    tmp %= DIV;
 
-			if (X > Y) {
-				int tmp = Y;
-				Y = X;
-				X = tmp;
-			}
+    if (n & 1) {
+        tmp <<= 1;
+        tmp %= DIV;
+    }
 
-			Y = Y - X;
-			X = 2 * X;
+    return tmp;
+}
 
-		}
-		res[tc] = min(X, Y);
-	}
+ll run() {
+    ll res = (A * myMod(K)) % DIV;
+    return min(res, DIV - res);
+}
 
-	for (int tc = 1; tc <= T; tc++)
-	{
-		cout << "#" << tc << " " << res[tc] << endl;
+int main(int argc, char** argv)
+{
+    int T;
+    cin >> T;
 
-	}
+    for (int tc = 1; tc <= T; ++tc) {
+        cin >> A >> B >> K;
+        DIV = A + B;
+        cout << '#' << tc << ' ' << run() << '\n';
+    }
+    return 0;
 }
