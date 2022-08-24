@@ -6,9 +6,11 @@ using namespace std;
 
 int dx[] = { 0,0,1,-1 };
 int dy[] = { 1,-1,0,0 };
+
 int map[100][100];
 int dp[100][100];
 bool check[100][100];
+
 int N;
 
 int bfs() {
@@ -42,18 +44,16 @@ int bfs() {
             }
         }
     }
-
     return dp[N - 1][N - 1];
 }
 
 
 int main(int argc, char** argv)
 {
-    int test_case;
     int T;
     cin >> T;
 
-    for (test_case = 1; test_case <= T; ++test_case)
+    for (int tc = 1; tc <= T; tc++)
     {
         memset(map, 0, sizeof(map));
         memset(dp, 0, sizeof(dp));
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
             }
         }
 
-        cout << "#" << test_case << " " << bfs() << "\n";
+        cout << "#" << tc << " " << bfs() << "\n";
     }
     return 0;
 }
