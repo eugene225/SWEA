@@ -5,6 +5,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="No9.java|No10.java|기초학습/No12.java|기초학습/No13.java|기초학습/No16.java|기초학습/No17.java|기초학습/No19.java" kind="src" path=""/>
+	<classpathentry excluding="No9.java|No10.java|기초학습/No12.java|기초학습/No13.java|기초학습/No16.java|기초학습/No17.java|기초학습/No19.java|기초학습/No20.java|기초학습/No22.java|기초학습/No23.java" kind="src" path=""/>
 	<classpathentry kind="output" path=""/>
 </classpath>
