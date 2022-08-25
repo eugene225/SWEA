@@ -1,4 +1,4 @@
-package 기초학습;
+package java;
 
 import java.io.*;
 
