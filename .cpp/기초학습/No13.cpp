@@ -90,13 +90,24 @@ int main(void) {
 	return 0;
 }
 
-#define NAME_MAXLEN 6
-#define PATH_MAXLEN 1999
 
-// The below commented functions are for your reference. If you want 
-// to use it, uncomment these functions.
+//constexpr int NAME_MAXLEN = 6;
+//constexpr int PATH_MAXLEN = 1999;
+constexpr int MAX_CHILD_COUNT = 30;
+constexpr int MAX_NODE_COUNT = 50000;
 
-int mstrcmp(const char *a, const char *b)
+struct Node {
+	char name[NAME_MAXLEN + 1];
+	int count;
+	Node* parent;
+	Node* child[MAX_CHILD_COUNT];
+};
+
+Node node_pool[1 + MAX_NODE_COUNT];
+int node_count;
+Node* root;
+
+int mstrcmp(const char* a, const char* b)
 {
 	int i;
 	for (i = 0; a[i] != '\0'; i++)
@@ -107,27 +118,7 @@ int mstrcmp(const char *a, const char *b)
 	return a[i] - b[i];
 }
 
-int mstrncmp(const char *a, const char *b, int len)
-{
-	for (int i = 0; i < len; i++)
-	{
-		if (a[i] != b[i])
-			return a[i] - b[i];
-	}
-	return 0;
-}
-
-int mstrlen(const char *a)
-{
-	int len = 0;
-
-	while (a[len] != '\0')
-		len++;
-
-	return len;
-}
-
-void mstrcpy(char *dest, const char *src)
+void mstrcpy(char* dest, const char* src)
 {
 	int i = 0;
 	while (src[i] != '\0')
@@ -138,170 +129,163 @@ void mstrcpy(char *dest, const char *src)
 	dest[i] = src[i];
 }
 
-void mstrncpy(char *dest, const char *src, int len)
-{
-	for (int i = 0; i<len; i++)
-	{
-		dest[i] = src[i];
+Node* get_node(char name[NAME_MAXLEN + 1]) {
+	mstrcpy(node_pool[node_count].name, name);
+	node_pool[node_count].count = 0;
+	node_pool[node_count].parent = nullptr;
+	for (int i = 0; i < MAX_CHILD_COUNT; ++i) {
+		node_pool[node_count].child[i] = nullptr;
 	}
-	dest[len] = '\0';
+
+	return &node_pool[node_count++];
 }
 
-typedef struct Node {
-	char name[7];
-	Node* low[30];
-	Node* toparent;
-	int num;
-}Node;
+Node* find_node(char path[PATH_MAXLEN + 1]) {
+	char name[NAME_MAXLEN + 1];
+	int i, j;
+	Node* node = root;
 
-Node pool[50000];
-int cnt;
-
-Node* getNode(char* name) {
-	mstrncpy(pool[cnt].name, name, mstrlen(name));
-	cnt++;
-	return &pool[cnt-1];
-}
-
-void init(int n) {
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < 30; j++) {
-			pool[i].low[j] = nullptr;
+	for (i = 1; '\0' != path[i]; ++i) {
+		for (j = 0; '/' != path[i]; ++i) {
+			name[j++] = path[i];
 		}
-		pool[i].toparent = nullptr;
-		pool[i].num = 0;
-	}
-	cnt = 1;
-	mstrncpy(pool[0].name, "/", 2);
-}
+		name[j] = '\0';
 
-void updatecnt(Node* rt, int count) {
-
-	while (rt != nullptr) {
-		rt->num += count;
-		rt = rt->toparent;
-	}
-}
-
-Node* find(char path[], Node* root) {
-	int count = 0;
-	int len = mstrlen(path);
-
-	for (int i = 1; i < mstrlen(path); i++) {
-		count = 0;
-		while (path[i] != '/') {
-			i++;
-			count++;
-		}
-
-		char name[7];
-		mstrncpy(name, path + i - count, count);
-
-		for (int k = 0; k < 30; k++) {
-			if (root->low[k] == nullptr) continue;
-
-			if (mstrncmp(root->low[k]->name, name, count) == 0)
-			{
-				root = root->low[k];
+		for (j = 0; j < MAX_CHILD_COUNT; ++j) {
+			if (node->child[j] && !mstrcmp(node->child[j]->name, name)) {
+				node = node->child[j];
 				break;
 			}
 		}
 	}
-	return root;
+
+	return node;
+}
+
+void cp(Node* parent_node, Node* src_node) {
+	Node* node = get_node(src_node->name);
+	node->count = src_node->count;
+	node->parent = parent_node;
+	int i;
+
+	for (i = 0; i < MAX_CHILD_COUNT; ++i) {
+		if (!parent_node->child[i]) {
+			parent_node->child[i] = node;
+			break;
+		}
+	}
+
+	for (i = 0; i < MAX_CHILD_COUNT; ++i) {
+		if (src_node->child[i]) {
+			cp(node, src_node->child[i]);
+		}
+	}
+
+	return;
+}
+
+void init(int n) {
+	node_pool[0].count = 0;
+	node_pool[0].parent = nullptr;
+	for (int i = 0; i < MAX_CHILD_COUNT; ++i) {
+		node_pool[0].child[i] = nullptr;
+	}
+	root = &node_pool[0];
+	node_count = 1;
+
+	return;
 }
 
 void cmd_mkdir(char path[PATH_MAXLEN + 1], char name[NAME_MAXLEN + 1]) {
-	Node* root = &pool[0];
-	root = find(path, root);
-	int i = 0;
-	while (root->low[i] != nullptr) {
-		i++;
+	Node* parent_node = find_node(path);
+	Node* node = get_node(name);
+	int i;
+
+	node->parent = parent_node;
+	for (i = 0; i < MAX_CHILD_COUNT; ++i) {
+		if (!parent_node->child[i]) {
+			parent_node->child[i] = node;
+			break;
+		}
 	}
-	Node* p = getNode(name);
-	root->low[i] = p;
-	p->toparent = root;
-	updatecnt(root, 1);
+
+	do {
+		++parent_node->count;
+		parent_node = parent_node->parent;
+	} while (parent_node);
+
+	return;
 }
 
 void cmd_rm(char path[PATH_MAXLEN + 1]) {
-	Node* root = &pool[0];
-	root = find(path, root);
-	Node* p = root->toparent;
+	Node* node = find_node(path);
+	Node* parent_node = node->parent;
+	int i;
 
-	updatecnt(p, -(root->num + 1));
-
-	for (int i = 0; i < 30; i++) {
-		if (p->low[i] == root) {
-			p->low[i] = nullptr;
+	for (i = 0; i < MAX_CHILD_COUNT; ++i) {
+		if (node == parent_node->child[i]) {
+			parent_node->child[i] = nullptr;
+			break;
 		}
 	}
-}
 
-Node* deepcopy(Node* rt) {
-	if (rt == nullptr) return nullptr;
+	do {
+		parent_node->count -= node->count + 1;
+		parent_node = parent_node->parent;
+	} while (parent_node);
 
-	Node* copy = getNode(rt->name);
-	if (rt->num == 0) return copy;
-
-	for (int i = 0; i < 30; i++) {
-		if (rt->low[i] == nullptr) continue;
-		copy->low[i] = deepcopy(rt->low[i]);
-		copy->low[i]->toparent = copy;
-		updatecnt(copy, (copy->low[i]->num) + 1);
-	}
-
-	return copy;
+	return;
 }
 
 void cmd_cp(char srcPath[PATH_MAXLEN + 1], char dstPath[PATH_MAXLEN + 1]) {
-	Node* root = &pool[0];
-	root = find(dstPath, root);
+	Node* src_node = find_node(srcPath);
+	Node* dst_node = find_node(dstPath);
+	int i;
 
-	Node* p = &pool[0];
-	p = find(srcPath, p);
+	cp(dst_node, src_node);
 
-	Node* tmp = deepcopy(p);
-	tmp->toparent = root;
+	do {
+		dst_node->count += src_node->count + 1;
+		dst_node = dst_node->parent;
+	} while (dst_node);
 
-	updatecnt(root, tmp->num + 1);
-
-	for (int i = 0; i < 30; i++) {
-		if (root->low[i] == nullptr) {
-			root->low[i] = tmp;
-			break;
-		}
-	}
+	return;
 }
 
 void cmd_mv(char srcPath[PATH_MAXLEN + 1], char dstPath[PATH_MAXLEN + 1]) {
-	Node* root = &pool[0];
-	root = find(dstPath, root);
+	Node* src_node = find_node(srcPath);
+	Node* dst_node = find_node(dstPath);
+	Node* parent_node = src_node->parent;
+	int i;
 
-	Node* p = &pool[0];
-	p = find(srcPath, p);
-	Node* pp = p->toparent;
-
-	updatecnt(pp, -(p->num + 1));
-	updatecnt(root, p->num + 1);
-
-	for (int i = 0; i < 30; i++) {
-		if (pp->low[i] == p) {
-			pp->low[i] = nullptr;
+	for (i = 0; i < MAX_CHILD_COUNT; ++i) {
+		if (src_node == parent_node->child[i]) {
+			parent_node->child[i] = nullptr;
 			break;
 		}
 	}
 
-	for (int i = 0; i < 30; i++) {
-		if (root->low[i] == nullptr) {
-			root->low[i] = p;
-			p->toparent = root;
+	do {
+		parent_node->count -= src_node->count + 1;
+		parent_node = parent_node->parent;
+	} while (parent_node);
+
+	src_node->parent = dst_node;
+	for (i = 0; i < MAX_CHILD_COUNT; ++i) {
+		if (!dst_node->child[i]) {
+			dst_node->child[i] = src_node;
 			break;
 		}
 	}
+
+	do {
+		dst_node->count += src_node->count + 1;
+		dst_node = dst_node->parent;
+	} while (dst_node);
+
+	return;
 }
 
 int cmd_find(char path[PATH_MAXLEN + 1]) {
-	Node* root = &pool[0];
-	root = find(path, root);
-	return root->num;
+	return find_node(path)->count;
 }

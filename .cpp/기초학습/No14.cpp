@@ -3,128 +3,128 @@
 #endif
 
 #include <stdio.h>
+#include <queue>
+using namespace std;
 
-static unsigned int seed = 12345;
-static unsigned int pseudo_rand(int max) {
-	seed = ((unsigned long long)seed * 1103515245 + 12345) & 0x7FFFFFFF;
-	return seed % max;
-}
+extern void bfs_init(int N, int map[10][10]);
+extern int bfs(int x1, int y1, int x2, int y2);
 
-#define MAX_N (40)
-#define MAX_K (98)
-#define MIN_N (2)
-#define MAX_CHILD (5)
+static int test_bfs() {
+	int N;
+	int map[10][10];
+	scanf("%d", &N);
 
-extern void dfs_init(int N, int path[MAX_N][2]);
-extern int dfs(int k);
-
-static int p[MAX_K + 2];
-static int c[MAX_K + 2];
-static int path[MAX_N][2];
-static void makeTree(int n) {
-	for (int i = 1; i < MAX_K + 2; ++i) {
-		p[i] = c[i] = -1;
-	}
-	c[pseudo_rand(MAX_K + 1) + 1] = 0;
-	for (int i = 0; i < n; ++i) {
-		int pi = pseudo_rand(MAX_K + 1) + 1;
-		while (c[pi] < 0 || c[pi] >= MAX_CHILD) {
-			++pi;
-			if (pi == MAX_K + 2)
-				pi = 1;
+	for (int i = 0; i < N; ++i) {
+		for (int j = 0; j < N; ++j) {
+			scanf("%d", &map[i][j]);
 		}
-		int ci = pseudo_rand(MAX_K + 1) + 1;
-		while (c[ci] >= 0) {
-			++ci;
-			if (ci == MAX_K + 2)
-				ci = 1;
-		}
-		p[ci] = pi;
-		++c[pi];
-		c[ci] = 0;
 	}
-	bool check[MAX_K + 2] = { false };
-	for (int i = 0; i < n; ++i) {
-		int e = pseudo_rand(MAX_K + 1) + 1;
-		while (check[e] || c[e] < 0 || p[e] == -1) {
-			++e;
-			if (e == MAX_K + 2)
-				e = 1;
-		}
-		check[e] = true;
-		path[i][0] = p[e];
-		path[i][1] = e;
+
+	bfs_init(N, map);
+
+	int M;
+	int score = 100;
+	scanf("%d", &M);
+
+	for (int i = 0; i < M; ++i) {
+		int x1, y1, x2, y2;
+		scanf("%d %d %d %d", &x1, &y1, &x2, &y2);
+		int result = bfs(x1, y1, x2, y2);
+        printf("result : %d\n", result);
+
+		int dist;
+		scanf("%d", &dist);
+        printf("dist : %d\n", dist);
+
+		if (result != dist) score = 0;
 	}
+
+	return score;
 }
 
 int main() {
 	setbuf(stdout, NULL);
-	int T;
-	//freopen("dfs_input.txt", "r", stdin);
-	scanf("%d", &T);
 
-	int totalScore = 0;
-	for (int tc = 1; tc <= T; tc++) {
-		int n, q;
-
-		scanf("%d %d %d", &n, &q, &seed);
-
-		makeTree(n - 1);
-		dfs_init(n, path);
-
-		bool check[MAX_K + 2] = { false };
-		int score = 100;
-		for (int i = 0; i < q; ++i) {
-			int k, ret, correct;
-
-			scanf("%d", &k);
-
-			ret = dfs(k);
-
-			scanf("%d", &correct);
-
-			if (ret != correct)
-				score = 0;
-		}
-		printf("#%d : %d\n", tc, score);
-		totalScore += score;
-	}
-	printf("#total score : %d\n", totalScore / T);
+	printf("#total score : %d\n", test_bfs());
 
 	return 0;
 }
 
-int *cnt; // 100
-int **ar;  //100,40
-int result = -1;
-int count = 0;
+int Map[11][11];
+int road[11][11];
+int Map_size;
+int q[100001][2];
+bool visited[11][11];
 
-void dfs_init(int N, int path[100][2])
-{
-	cnt = new int[100];
-	ar = new int*[100];
-	for (int i = 0; i < 100; i++) ar[i] = new int[40];
-	for (int i = 0; i < N - 1; i++) {
-		ar[path[i][0]][cnt[path[i][0]]++] = path[i][1];
-	}
+int dx[4] = { -1, 1, 0, 0 };   // 상화좌우 x축 방향
+int dy[4] = { 0, 0, -1, 1 };   // 상화좌우 y축 방향
+
+void bfs_init(int map_size, int map[10][10]) {
+    Map_size = map_size;
+
+    for (int i = 1; i <= Map_size; i++) {
+        for (int j = 1; j <= Map_size; j++) {
+            Map[i][j] = map[i-1][j-1];
+        }
+    }
 }
 
-void dfs_rec(int compare, int n) {
-	if (count == 0 && compare < n) {
-		count = 1;
-		result = n;
-		return;
-	}
-	else if (cnt[n] == 0) return;
-	else {
-		for (int i = 0; i < cnt[n]; i++) {
-			dfs_rec(compare, ar[n][i]);
-		}
-	}
+void init_road() {
+    for (int i = 1; i <= 10; i++) {
+        for (int j = 1; j <= 10; j++) {
+            road[i][j] = -1;
+            visited[i][j] = false;
+        }
+    }
 }
-int dfs(int n) {
-	result = -1;
-	count = 0;
-	dfs_rec(n, n);
-	return result;
+
+int bfs(int x1, int y1, int x2, int y2) {
+    init_road();
+
+    // 큐 front, rear
+    int front = 0, rear = 0;
+
+    // 큐에 처음 (x1, y1) 좌표 삽입
+    q[front][0] = x1;
+    q[front][1] = y1;
+    rear++;
+
+    road[y1][x1] = 0;
+    visited[y1][x1] = true;
+
+    // 큐가 빌 때 까지
+    while (front < rear) {
+        int x = q[front][0]; // x 좌표
+        int y = q[front][1]; // y 좌표 
+        front++; // front 이동
+        //printf("x : %d, y : %d \n", x, y);
+
+        // 인접 칸(상하좌우) 이동
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+
+            // 범위를 벗어나는 경우
+            if (nx < 1 || ny < 1 || nx > Map_size || ny > Map_size)
+                continue;
+
+            // 길이 아닌 경우
+            if (Map[ny][nx] != 0 || visited[ny][nx]) {
+                continue;
+            }
+
+            // 이전 칸에서 이동한 칸 수 + 1
+            road[ny][nx] = road[y][x] + 1;
+            //printf("nx : %d, ny : %d, road[nx][ny]:%d\n", nx, ny, road[ny][nx]);
+            //if (nx == x2 && ny == y2) return road[nx][ny];
+
+            // 큐에 (nx, ny) 삽입
+            q[rear][0] = nx;
+            q[rear][1] = ny;
+            rear++;
+            visited[ny][nx] = true;
+        }
+    }
+
+    return road[y2][x2];
 }
