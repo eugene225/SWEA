@@ -92,6 +92,7 @@ int main()
 }
 
 //#include <bits/stdc++.h>
+#include <vector>
 using namespace std;
 
 #define endl '\n' 
@@ -103,7 +104,7 @@ using namespace std;
 #define CMD_NUMBER_OF_CANDIDATE 2
 #define CMD_MAX_AREA 3
 
-typedef pair<int, int> pii;
+typedef pair<int, int> pi;
 
 
 int N, A[22][22], B[22][22];
@@ -117,7 +118,7 @@ bool safe(int x, int y) {
     return (x > 0 && y > 0 && x <= N && y <= N);
 }
 
-bool safe2(int x, int y) {
+bool safe_new(int x, int y) {
     return (x >= 0 && y >= 0 && x <= N + 1 && y <= N + 1);
 }
 
@@ -132,17 +133,18 @@ bool palindrome(int x) {
 
 
 struct Queue {
-    pii data[505];
+    pi data[505];
     int l, r;
+
     void init() {
         l = r = 0;
     }
 
     void push(int x, int y) {
-        data[r++] = pii(x, y);
+        data[r++] = pi(x, y);
     }
 
-    pii pop() {
+    pi pop() {
         return data[l++];
     }
 
@@ -151,26 +153,27 @@ struct Queue {
     }
 };
 
-bool vis[22][22];
+bool visit[22][22];
 Queue q;
+
 int cal(int lev) {
     q.init();
-    memset(vis, 0, sizeof(vis));
+    memset(visit, 0, sizeof(visit));
 
     q.push(0, 0);
-    vis[0][0] = 1;
+    visit[0][0] = 1;
 
     int ret = (N + 2) * (N + 2);
 
     while (!q.empty()) {
-        pii cur = q.pop();
+        pi cur = q.pop();
         ret--;
 
         for (int i = 0; i < 4; i++) {
             int nx = cur.first + dx[i];
             int ny = cur.second + dy[i];
-            if (safe2(nx, ny) && !vis[nx][ny] && B[nx][ny] < lev) {
-                vis[nx][ny] = 1;
+            if (safe_new(nx, ny) && !visit[nx][ny] && B[nx][ny] < lev) {
+                visit[nx][ny] = 1;
                 q.push(nx, ny);
             }
         }
@@ -191,7 +194,6 @@ void init(int n, int _A[20][20]) {
         for (int j = 1; j <= N; j++) A[i][j] = B[i][j] = _A[i - 1][j - 1];
     }
 
-    // TABLE[] ÀüÃ³¸®
     for (int i = 1; i <= N; i++) {
         for (int j = 1; j <= N; j++) {
             int base = A[i][j];
